@@ -3,12 +3,12 @@ import cors from 'cors';
 import path from 'path';
 import mongoose from 'mongoose';
 import customersRouter from './routes/customers';
-import dotenv from "dotenv"
 import { env } from './config/env';
-const app = express();
-const PORT = process.env.PORT || 3000;
 
-dotenv.config();
+
+const app = express();
+const PORT = env.PORT || 3000;
+
 // ── Middleware ──────────────────────────────────────────────────────────────
 
 app.use(cors());                        // allow frontend fetch from any origin
@@ -30,7 +30,7 @@ mongoose
   .connect(MONGO_URI)
   .then(() => {
     console.log('✅ Connected to MongoDB Atlas');
-    app.listen(PORT, () =>
+    app.listen(PORT,'0.0.0.0', () =>
       console.log(`🚀 Server running → http://localhost:${PORT}`)
     );
   })

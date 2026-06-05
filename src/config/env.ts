@@ -13,4 +13,5 @@ function requireEnv(key: string): string {
 
 export const env = {
   MONGODB_URI: requireEnv('MONGODB_URI'),
+  PORT: requireEnv('PORT')
 } as const;
