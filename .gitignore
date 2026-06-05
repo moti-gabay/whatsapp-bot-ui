@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+
+# whatsapp-web.js stores your authenticated session here
+# DO NOT commit this — it contains your WhatsApp session tokens
+.wwebjs_auth/
+.wwebjs_cache/

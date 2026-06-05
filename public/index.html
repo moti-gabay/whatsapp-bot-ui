@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>לקוחות הבוט | WhatsApp Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Reset & tokens ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --wa-green:        #25D366;
+      --wa-green-dark:   #128C7E;
+      --wa-green-light:  #dcf8c6;
+      --wa-teal:         #075E54;
+      --bg:              #f0f2f5;
+      --surface:         #ffffff;
+      --surface-2:       #f7f7f7;
+      --border:          #e8e8e8;
+      --text-primary:    #111b21;
+      --text-secondary:  #667781;
+      --text-muted:      #8696a0;
+      --radius:          12px;
+      --shadow-sm:       0 1px 3px rgba(0,0,0,.08);
+      --shadow-md:       0 4px 16px rgba(0,0,0,.10);
+    }
+
+    body {
+      font-family: 'Heebo', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    /* ── Header ─────────────────────────────────────────────── */
+    header {
+      background: linear-gradient(135deg, var(--wa-teal) 0%, var(--wa-green-dark) 100%);
+      color: #fff;
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,.18);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .wa-icon {
+      width: 36px;
+      height: 36px;
+      background: rgba(255,255,255,.15);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    header h1 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: .01em;
+    }
+
+    header p {
+      font-size: .75rem;
+      opacity: .75;
+      font-weight: 300;
+    }
+
+    #customer-count-badge {
+      background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.25);
+      color: #fff;
+      font-size: .78rem;
+      font-weight: 500;
+      padding: 4px 14px;
+      border-radius: 20px;
+      display: none; /* shown after load */
+    }
+
+    /* ── Main layout ─────────────────────────────────────────── */
+    main {
+      max-width: 1100px;
+      margin: 32px auto;
+      padding: 0 20px 60px;
+    }
+
+    /* ── Stat cards ──────────────────────────────────────────── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .stat-card .label {
+      font-size: .75rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .stat-card .value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--wa-green-dark);
+      line-height: 1;
+    }
+
+    .stat-card .sub {
+      font-size: .8rem;
+      color: var(--text-secondary);
+    }
+
+    /* ── Card shell around table ─────────────────────────────── */
+    .table-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .table-card-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .table-card-header h2 {
+      font-size: .95rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    #search-input {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-family: inherit;
+      font-size: .85rem;
+      color: var(--text-primary);
+      background: var(--surface-2);
+      width: 220px;
+      outline: none;
+      transition: border-color .2s;
+      direction: rtl;
+    }
+
+    #search-input:focus { border-color: var(--wa-green); }
+    #search-input::placeholder { color: var(--text-muted); }
+
+    /* ── Table ───────────────────────────────────────────────── */
+    .table-wrapper { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .88rem;
+    }
+
+    thead {
+      background: var(--surface-2);
+    }
+
+    thead th {
+      padding: 12px 20px;
+      text-align: right;
+      font-size: .72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      white-space: nowrap;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .15s;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #f9fbff; }
+
+    tbody td {
+      padding: 14px 20px;
+      color: var(--text-primary);
+      vertical-align: middle;
+    }
+
+    /* Avatar + name cell */
+    .name-cell {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--wa-green) 0%, var(--wa-green-dark) 100%);
+      color: #fff;
+      font-weight: 700;
+      font-size: .8rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .phone-cell {
+      font-family: 'Courier New', monospace;
+      font-size: .82rem;
+      color: var(--text-secondary);
+      direction: ltr;
+      text-align: left;
+    }
+
+    .email-cell {
+      color: var(--wa-green-dark);
+      font-size: .84rem;
+    }
+
+    /* Service type badge */
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: .75rem;
+      font-weight: 600;
+      background: var(--wa-green-light);
+      color: var(--wa-green-dark);
+      white-space: nowrap;
+    }
+
+    .date-cell {
+      color: var(--text-muted);
+      font-size: .8rem;
+      white-space: nowrap;
+    }
+
+    /* ── States: loading / error / empty ─────────────────────── */
+    .state-row td {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--wa-green);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 0 auto 14px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-icon { font-size: 2rem; margin-bottom: 10px; }
+
+    /* ── Responsive ──────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      header h1 { font-size: .95rem; }
+      main { margin: 16px auto; padding: 0 12px 40px; }
+      #search-input { width: 100%; }
+      tbody td, thead th { padding: 12px 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════ HEADER ════════════════════════ -->
+<header>
+  <div class="header-brand">
+    <div class="wa-icon">💬</div>
+    <div>
+      <h1>לוח בקרה — לקוחות הבוט</h1>
+      <p>WhatsApp Customer Dashboard</p>
+    </div>
+  </div>
+  <span id="customer-count-badge"></span>
+</header>
+
+<!-- ════════════════════════ MAIN ══════════════════════════ -->
+<main>
+
+  <!-- Stat cards (populated by JS) -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <span class="label">סה"כ לקוחות</span>
+      <span class="value" id="stat-total">—</span>
+      <span class="sub">רשומים במערכת</span>
+    </div>
+    <div class="stat-card">
+      <span class="label">נרשמו השבוע</span>
+      <span class="value" id="stat-week">—</span>
+      <span class="sub">7 הימים האחרונים</span>
+    </div>
+    <div class="stat-card">
+      <span class="label">הרשמה אחרונה</span>
+      <span class="value" id="stat-latest" style="font-size:1.1rem;padding-top:6px">—</span>
+      <span class="sub" id="stat-latest-sub"></span>
+    </div>
+  </div>
+
+  <!-- Table card -->
+  <div class="table-card">
+    <div class="table-card-header">
+      <h2>רשימת לקוחות</h2>
+      <input id="search-input" type="search" placeholder="🔍  חפש לפי שם, טלפון, אימייל..." />
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>שם לקוח</th>
+            <th>טלפון</th>
+            <th>אימייל</th>
+            <th>סוג שירות</th>
+            <th>תאריך הרשמה</th>
+          </tr>
+        </thead>
+        <tbody id="customers-tbody">
+          <!-- Loading state -->
+          <tr class="state-row">
+            <td colspan="5">
+              <div class="spinner"></div>
+              <div>טוען נתונים...</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<!-- ════════════════════════ SCRIPT ════════════════════════ -->
+<script>
+  const API_URL = '/api/customers';
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  function formatDate(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleString('he-IL', {
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit',
+    });
+  }
+
+  function initials(name = '') {
+    return name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?';
+  }
+
+  function escapeHtml(str = '') {
+    return String(str)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // ── Render helpers ─────────────────────────────────────────────────────────
+
+  function renderRows(customers) {
+    const tbody = document.getElementById('customers-tbody');
+
+    if (!customers.length) {
+      tbody.innerHTML = `
+        <tr class="state-row">
+          <td colspan="5">
+            <div class="error-icon">📭</div>
+            <div>אין לקוחות רשומים עדיין</div>
+          </td>
+        </tr>`;
+      return;
+    }
+
+    tbody.innerHTML = customers.map(c => `
+      <tr>
+        <td>
+          <div class="name-cell">
+            <div class="avatar">${escapeHtml(initials(c.name))}</div>
+            <span>${escapeHtml(c.name || '—')}</span>
+          </div>
+        </td>
+        <td class="phone-cell">${escapeHtml(c.phone || '—')}</td>
+        <td class="email-cell">${escapeHtml(c.email || '—')}</td>
+        <td><span class="badge">${escapeHtml(c.serviceType || c.service_type || '—')}</span></td>
+        <td class="date-cell">${formatDate(c.createdAt)}</td>
+      </tr>
+    `).join('');
+  }
+
+  // ── Stats ──────────────────────────────────────────────────────────────────
+
+  function updateStats(customers) {
+    document.getElementById('stat-total').textContent = customers.length;
+
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const thisWeek = customers.filter(c => new Date(c.createdAt) >= weekAgo).length;
+    document.getElementById('stat-week').textContent = thisWeek;
+
+    if (customers.length) {
+      const latest = customers[0]; // already sorted newest-first
+      document.getElementById('stat-latest').textContent = escapeHtml(latest.name || '—');
+      document.getElementById('stat-latest-sub').textContent = formatDate(latest.createdAt);
+    }
+
+    const badge = document.getElementById('customer-count-badge');
+    badge.textContent = `${customers.length} לקוחות`;
+    badge.style.display = 'inline-block';
+  }
+
+  // ── Search / filter ────────────────────────────────────────────────────────
+
+  let allCustomers = [];
+
+  document.getElementById('search-input').addEventListener('input', function () {
+    const q = this.value.trim().toLowerCase();
+    if (!q) { renderRows(allCustomers); return; }
+    const filtered = allCustomers.filter(c =>
+      (c.name        || '').toLowerCase().includes(q) ||
+      (c.phone       || '').toLowerCase().includes(q) ||
+      (c.email       || '').toLowerCase().includes(q) ||
+      (c.serviceType || c.service_type || '').toLowerCase().includes(q)
+    );
+    renderRows(filtered);
+  });
+
+  // ── Fetch ──────────────────────────────────────────────────────────────────
+
+  async function loadCustomers() {
+    try {
+      const res = await fetch(API_URL);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      allCustomers = await res.json();
+      renderRows(allCustomers);
+      updateStats(allCustomers);
+    } catch (err) {
+      console.error('Failed to load customers:', err);
+      document.getElementById('customers-tbody').innerHTML = `
+        <tr class="state-row">
+          <td colspan="5">
+            <div class="error-icon">⚠️</div>
+            <div>שגיאה בטעינת הנתונים — בדוק שהשרת פועל</div>
+          </td>
+        </tr>`;
+    }
+  }
+
+  loadCustomers();
+</script>
+
+</body>
+</html>
